@@ -17,4 +17,4 @@ Currently `gosmopolitan` checks for the following patterns:
 
 ## License
 
-`natlangcheck` is licensed under the GPL license, version 3 or later.
+`gosmopolitan` is licensed under the GPL license, version 3 or later.
