@@ -1,4 +1,4 @@
-module github.com/xen0n/go-natlangcheck
+module github.com/xen0n/gosmopolitan
 
 go 1.19
 
