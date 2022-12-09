@@ -7,20 +7,32 @@ import (
 	"os"
 	"regexp"
 
+	"github.com/urfave/cli/v2"
 	"golang.org/x/tools/go/packages"
 )
 
 var reHanChars = regexp.MustCompile(`\p{Han}`)
 
 func main() {
+	app := cli.App{
+		Name: "gosmopolitan",
+		Action: func(cCtx *cli.Context) error {
+			return runOn(cCtx.Args().Slice()...)
+		},
+	}
+
+	_ = app.Run(os.Args)
+}
+
+func runOn(pkgPatterns ...string) error {
 	cfg := packages.Config{
 		Mode: packages.NeedCompiledGoFiles | // for acting on anything at all
 			packages.NeedTypes | // for Fset for printing positions
 			packages.NeedSyntax, // for the actual AST nodes
 	}
-	pkgs, err := packages.Load(&cfg, "./...")
+	pkgs, err := packages.Load(&cfg, pkgPatterns...)
 	if err != nil {
-		panic(err)
+		return cli.Exit("fatal: failed to load packages", 1)
 	}
 
 	numErrors := 0
@@ -29,8 +41,10 @@ func main() {
 	}
 
 	if numErrors > 0 {
-		os.Exit(1)
+		return cli.Exit("fatal: gosmopolitan found errors", 1)
 	}
+
+	return nil
 }
 
 func processPkg(pkg *packages.Package) int {
