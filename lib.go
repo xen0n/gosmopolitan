@@ -5,6 +5,7 @@ import (
 	"go/ast"
 	"go/token"
 	"regexp"
+	"strings"
 
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
@@ -37,9 +38,23 @@ func (c *processCtx) fset() *token.FileSet {
 func (c *processCtx) run() (any, error) {
 	insp := c.p.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
+	// ignore test files, because test files could be full of i18n and l10n
+	// fixtures, and we want to focus on the actual run-time logic
+	//
+	// TODO: is there a way to both ignore test files earlier, and make use of
+	// inspect.Analyzer's cached results? currently Inspector doesn't provide
+	// a way to selectively travese some files' AST but not others.
+	isBelongingToTestFiles := func(n ast.Node) bool {
+		return strings.HasSuffix(c.p.Fset.File(n.Pos()).Name(), "_test.go")
+	}
+
 	insp.Nodes(nil, func(n ast.Node, push bool) bool {
 		// we only need to look at each node once
 		if !push {
+			return false
+		}
+
+		if isBelongingToTestFiles(n) {
 			return false
 		}
 
@@ -77,6 +92,10 @@ func (c *processCtx) run() (any, error) {
 	insp.Nodes([]ast.Node{(*ast.Ident)(nil)}, func(n ast.Node, push bool) bool {
 		// we only need to look at each node once
 		if !push {
+			return false
+		}
+
+		if isBelongingToTestFiles(n) {
 			return false
 		}
 
