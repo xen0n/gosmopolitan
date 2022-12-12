@@ -73,5 +73,32 @@ func (c *processCtx) run() (any, error) {
 		return true
 	})
 
+	// check time.Local usages
+	insp.Nodes([]ast.Node{(*ast.Ident)(nil)}, func(n ast.Node, push bool) bool {
+		// we only need to look at each node once
+		if !push {
+			return false
+		}
+
+		ident := n.(*ast.Ident)
+
+		d := c.p.TypesInfo.ObjectOf(ident)
+		if d == nil || d.Pkg() == nil {
+			return true
+		}
+
+		if d.Pkg().Path() == "time" && d.Name() == "Local" {
+			diag := analysis.Diagnostic{
+				Pos:     n.Pos(),
+				End:     n.End(),
+				Message: "usage of time.Local",
+			}
+			c.p.Report(diag)
+
+		}
+
+		return true
+	})
+
 	return nil, nil
 }
