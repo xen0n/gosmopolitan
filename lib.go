@@ -77,12 +77,11 @@ func (c *processCtx) run() (any, error) {
 		// the sense of "writing system")
 		// for now only the Han script is being checked
 		if reHanChars.MatchString(lit.Value) {
-			diag := analysis.Diagnostic{
+			c.p.Report(analysis.Diagnostic{
 				Pos:     lit.Pos(),
 				End:     lit.End(),
 				Message: fmt.Sprintf("string literal contains %s script char(s)", "Han"),
-			}
-			c.p.Report(diag)
+			})
 		}
 
 		return true
@@ -107,13 +106,11 @@ func (c *processCtx) run() (any, error) {
 		}
 
 		if d.Pkg().Path() == "time" && d.Name() == "Local" {
-			diag := analysis.Diagnostic{
+			c.p.Report(analysis.Diagnostic{
 				Pos:     n.Pos(),
 				End:     n.End(),
 				Message: "usage of time.Local",
-			}
-			c.p.Report(diag)
-
+			})
 		}
 
 		return true
