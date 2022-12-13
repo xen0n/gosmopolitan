@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go/ast"
 	"go/token"
+	"go/types"
 	"regexp"
 	"strings"
 
@@ -104,6 +105,14 @@ func sliceToSet[T comparable](x []T) map[T]struct{} {
 	return y
 }
 
+func getFullyQualifiedName(x types.Object) string {
+	pkg := x.Pkg()
+	if pkg == nil {
+		return x.Name()
+	}
+	return fmt.Sprintf("(%s).%s", pkg.Path(), x.Name())
+}
+
 func (c *processCtx) run() (any, error) {
 	escapeHatchesSet := sliceToSet(c.cfg.EscapeHatches)
 
@@ -153,8 +162,7 @@ func (c *processCtx) run() (any, error) {
 				ident = x.Sel
 			}
 			referent := c.p.TypesInfo.Uses[ident]
-			fullQualifiedName := fmt.Sprintf("(%s).%s", referent.Pkg().Path(), referent.Name())
-			_, isEscapeHatch := escapeHatchesSet[fullQualifiedName]
+			_, isEscapeHatch := escapeHatchesSet[getFullyQualifiedName(referent)]
 			// if isEscapeHatch: don't recurse (false)
 			return !isEscapeHatch
 		}
