@@ -64,6 +64,26 @@ func (c *processCtx) run() (any, error) {
 			return false
 		}
 
+		// and don't look inside escape hatches
+		if ce, ok := n.(*ast.CallExpr); ok {
+			var ident *ast.Ident
+			switch x := ce.Fun.(type) {
+			case *ast.Ident:
+				ident = x
+			case *ast.SelectorExpr:
+				ident = x.Sel
+			}
+			referent := c.p.TypesInfo.Uses[ident]
+			fullQualifiedName := fmt.Sprintf("(%s).%s", referent.Pkg().Path(), referent.Name())
+			// XXX this will become configurable later
+			if fullQualifiedName == "(github.com/xen0n/gosmopolitan/testdata/pkgFoo).escapeHatch" ||
+				fullQualifiedName == "(github.com/xen0n/gosmopolitan/testdata/pkgFoo).pri18ntln" {
+				return false
+			}
+
+			return true
+		}
+
 		// check only string literals
 		lit, ok := n.(*ast.BasicLit)
 		if !ok {
