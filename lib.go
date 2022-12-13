@@ -162,6 +162,10 @@ func (c *processCtx) run() (any, error) {
 				ident = x.Sel
 			}
 			referent := c.p.TypesInfo.Uses[ident]
+			if referent == nil {
+				return true
+			}
+
 			_, isEscapeHatch := escapeHatchesSet[getFullyQualifiedName(referent)]
 			// if isEscapeHatch: don't recurse (false)
 			return !isEscapeHatch
