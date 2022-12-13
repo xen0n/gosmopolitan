@@ -13,11 +13,47 @@ import (
 )
 
 type AnalyzerConfig struct {
+	// EscapeHatches is optionally a list of fully qualified names, in the
+	// `(full/pkg/path).name` form, to act as "i18n escape hatches". Inside
+	// call-like expressions to those names, the string literal script check
+	// is ignored.
+	//
+	// With this functionality in place, you can use type aliases like
+	// `type R = string` as markers, or have explicitly i18n-aware functions
+	// exempt from the checks.
+	EscapeHatches []string
 }
 
-var DefaultConfig = &AnalyzerConfig{}
+func NewAnalyzer() *analysis.Analyzer {
+	var escapeHatchesStr string
 
-func NewAnalyzer(cfg *AnalyzerConfig) *analysis.Analyzer {
+	a := &analysis.Analyzer{
+		Name: "gosmopolitan",
+		Doc:  "gosmopolitan checks for possible hurdles to i18n/l10n",
+		Requires: []*analysis.Analyzer{
+			inspect.Analyzer,
+		},
+		Run: func(p *analysis.Pass) (any, error) {
+			cfg := AnalyzerConfig{
+				EscapeHatches: strings.Split(escapeHatchesStr, ","),
+			}
+			pctx := processCtx{cfg: &cfg, p: p}
+			return pctx.run()
+		},
+		RunDespiteErrors: false,
+	}
+
+	a.Flags.StringVar(
+		&escapeHatchesStr,
+		"escapehatches",
+		"",
+		"comma-separated list of fully qualified names to act as i18n escape hatches",
+	)
+
+	return a
+}
+
+func NewAnalyzerWithConfig(cfg *AnalyzerConfig) *analysis.Analyzer {
 	a := &analysis.Analyzer{
 		Name: "gosmopolitan",
 		Doc:  "gosmopolitan checks for possible hurdles to i18n/l10n",
@@ -34,7 +70,7 @@ func NewAnalyzer(cfg *AnalyzerConfig) *analysis.Analyzer {
 	return a
 }
 
-var DefaultAnalyzer = NewAnalyzer(DefaultConfig)
+var DefaultAnalyzer = NewAnalyzer()
 
 var reHanChars = regexp.MustCompile(`\p{Han}`)
 
@@ -43,7 +79,18 @@ type processCtx struct {
 	p   *analysis.Pass
 }
 
+func sliceToSet[T comparable](x []T) map[T]struct{} {
+	// lo.SliceToMap(x, func(k T) (T, struct{}) { return k, struct{}{} })
+	y := make(map[T]struct{}, len(x))
+	for _, k := range x {
+		y[k] = struct{}{}
+	}
+	return y
+}
+
 func (c *processCtx) run() (any, error) {
+	escapeHatchesSet := sliceToSet(c.cfg.EscapeHatches)
+
 	insp := c.p.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	// ignore test files, because test files could be full of i18n and l10n
@@ -83,13 +130,9 @@ func (c *processCtx) run() (any, error) {
 			}
 			referent := c.p.TypesInfo.Uses[ident]
 			fullQualifiedName := fmt.Sprintf("(%s).%s", referent.Pkg().Path(), referent.Name())
-			// XXX this will become configurable later
-			if fullQualifiedName == "(github.com/xen0n/gosmopolitan/testdata/pkgFoo).escapeHatch" ||
-				fullQualifiedName == "(github.com/xen0n/gosmopolitan/testdata/pkgFoo).pri18ntln" {
-				return false
-			}
-
-			return true
+			_, isEscapeHatch := escapeHatchesSet[fullQualifiedName]
+			// if isEscapeHatch: don't recurse (false)
+			return !isEscapeHatch
 		}
 
 		// check only string literals
