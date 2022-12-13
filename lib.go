@@ -13,6 +13,15 @@ import (
 )
 
 type AnalyzerConfig struct {
+	// LookAtTests is flag controlling whether the lints are going to look at
+	// test files, despite other config knobs of the Go analysis tooling
+	// framework telling us otherwise.
+	//
+	// By default gosmopolitan does not look at test files, because i18n-aware
+	// apps most probably have many unmarked strings in test cases, and names
+	// and descriptions *of* test cases are probably in the program's original
+	// natural language too.
+	LookAtTests bool
 	// EscapeHatches is optionally a list of fully qualified names, in the
 	// `(full/pkg/path).name` form, to act as "i18n escape hatches". Inside
 	// call-like expressions to those names, the string literal script check
@@ -25,6 +34,7 @@ type AnalyzerConfig struct {
 }
 
 func NewAnalyzer() *analysis.Analyzer {
+	var lookAtTests bool
 	var escapeHatchesStr string
 
 	a := &analysis.Analyzer{
@@ -35,6 +45,7 @@ func NewAnalyzer() *analysis.Analyzer {
 		},
 		Run: func(p *analysis.Pass) (any, error) {
 			cfg := AnalyzerConfig{
+				LookAtTests:   lookAtTests,
 				EscapeHatches: strings.Split(escapeHatchesStr, ","),
 			}
 			pctx := processCtx{cfg: &cfg, p: p}
@@ -43,6 +54,11 @@ func NewAnalyzer() *analysis.Analyzer {
 		RunDespiteErrors: false,
 	}
 
+	a.Flags.BoolVar(&lookAtTests,
+		"lookattests",
+		false,
+		"also check the test files",
+	)
 	a.Flags.StringVar(
 		&escapeHatchesStr,
 		"escapehatches",
@@ -93,8 +109,9 @@ func (c *processCtx) run() (any, error) {
 
 	insp := c.p.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
-	// ignore test files, because test files could be full of i18n and l10n
-	// fixtures, and we want to focus on the actual run-time logic
+	// support ignoring the test files, because test files could be full of
+	// i18n and l10n fixtures, and we want to focus on the actual run-time
+	// logic
 	//
 	// TODO: is there a way to both ignore test files earlier, and make use of
 	// inspect.Analyzer's cached results? currently Inspector doesn't provide
@@ -103,13 +120,20 @@ func (c *processCtx) run() (any, error) {
 		return strings.HasSuffix(c.p.Fset.File(n.Pos()).Name(), "_test.go")
 	}
 
+	shouldSkipTheContainingFile := func(n ast.Node) bool {
+		if c.cfg.LookAtTests {
+			return true
+		}
+		return isBelongingToTestFiles(n)
+	}
+
 	insp.Nodes(nil, func(n ast.Node, push bool) bool {
 		// we only need to look at each node once
 		if !push {
 			return false
 		}
 
-		if isBelongingToTestFiles(n) {
+		if shouldSkipTheContainingFile(n) {
 			return false
 		}
 
@@ -165,7 +189,7 @@ func (c *processCtx) run() (any, error) {
 			return false
 		}
 
-		if isBelongingToTestFiles(n) {
+		if shouldSkipTheContainingFile(n) {
 			return false
 		}
 
