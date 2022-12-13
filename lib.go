@@ -12,27 +12,35 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-var Analyzer = &analysis.Analyzer{
-	Name: "gosmopolitan",
-	Doc:  "gosmopolitan checks for possible hurdles to i18n/l10n",
-	Requires: []*analysis.Analyzer{
-		inspect.Analyzer,
-	},
-	Run: func(p *analysis.Pass) (any, error) {
-		pctx := processCtx{p: p}
-		return pctx.run()
-	},
-	RunDespiteErrors: false,
+type AnalyzerConfig struct {
 }
+
+var DefaultConfig = &AnalyzerConfig{}
+
+func NewAnalyzer(cfg *AnalyzerConfig) *analysis.Analyzer {
+	a := &analysis.Analyzer{
+		Name: "gosmopolitan",
+		Doc:  "gosmopolitan checks for possible hurdles to i18n/l10n",
+		Requires: []*analysis.Analyzer{
+			inspect.Analyzer,
+		},
+		Run: func(p *analysis.Pass) (any, error) {
+			pctx := processCtx{cfg: cfg, p: p}
+			return pctx.run()
+		},
+		RunDespiteErrors: false,
+	}
+
+	return a
+}
+
+var DefaultAnalyzer = NewAnalyzer(DefaultConfig)
 
 var reHanChars = regexp.MustCompile(`\p{Han}`)
 
 type processCtx struct {
-	p *analysis.Pass
-}
-
-func (c *processCtx) fset() *token.FileSet {
-	return c.p.Fset
+	cfg *AnalyzerConfig
+	p   *analysis.Pass
 }
 
 func (c *processCtx) run() (any, error) {

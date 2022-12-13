@@ -6,5 +6,5 @@ import (
 )
 
 func main() {
-	singlechecker.Main(gosmopolitan.Analyzer)
+	singlechecker.Main(gosmopolitan.DefaultAnalyzer)
 }
