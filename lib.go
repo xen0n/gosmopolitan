@@ -153,20 +153,9 @@ func (c *processCtx) run() (any, error) {
 		}
 
 		// and don't look inside escape hatches
-		if ce, ok := n.(*ast.CallExpr); ok {
-			var ident *ast.Ident
-			switch x := ce.Fun.(type) {
-			case *ast.Ident:
-				ident = x
-			case *ast.SelectorExpr:
-				ident = x.Sel
-			}
-			referent := c.p.TypesInfo.Uses[ident]
-			if referent == nil {
-				return true
-			}
-
-			_, isEscapeHatch := escapeHatchesSet[getFullyQualifiedName(referent)]
+		referentFQN := c.getFullyQualifiedNameOfReferent(n)
+		if referentFQN != "" {
+			_, isEscapeHatch := escapeHatchesSet[referentFQN]
 			// if isEscapeHatch: don't recurse (false)
 			return !isEscapeHatch
 		}
@@ -224,4 +213,27 @@ func (c *processCtx) run() (any, error) {
 	})
 
 	return nil, nil
+}
+
+func (c *processCtx) getFullyQualifiedNameOfReferent(n ast.Node) string {
+	var ident *ast.Ident
+	switch e := n.(type) {
+	case *ast.CallExpr:
+		switch x := e.Fun.(type) {
+		case *ast.Ident:
+			ident = x
+		case *ast.SelectorExpr:
+			ident = x.Sel
+		}
+
+	default:
+		return ""
+	}
+
+	referent := c.p.TypesInfo.Uses[ident]
+	if referent == nil {
+		return ""
+	}
+
+	return getFullyQualifiedName(referent)
 }
