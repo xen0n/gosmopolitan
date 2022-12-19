@@ -219,12 +219,7 @@ func (c *processCtx) getFullyQualifiedNameOfReferent(n ast.Node) string {
 	var ident *ast.Ident
 	switch e := n.(type) {
 	case *ast.CallExpr:
-		switch x := e.Fun.(type) {
-		case *ast.Ident:
-			ident = x
-		case *ast.SelectorExpr:
-			ident = x.Sel
-		}
+		ident = getIdentOfTypeOfExpr(e.Fun)
 
 	default:
 		return ""
@@ -236,4 +231,14 @@ func (c *processCtx) getFullyQualifiedNameOfReferent(n ast.Node) string {
 	}
 
 	return getFullyQualifiedName(referent)
+}
+
+func getIdentOfTypeOfExpr(e ast.Expr) *ast.Ident {
+	switch x := e.(type) {
+	case *ast.Ident:
+		return x
+	case *ast.SelectorExpr:
+		return x.Sel
+	}
+	return nil
 }
