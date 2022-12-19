@@ -221,6 +221,9 @@ func (c *processCtx) getFullyQualifiedNameOfReferent(n ast.Node) string {
 	case *ast.CallExpr:
 		ident = getIdentOfTypeOfExpr(e.Fun)
 
+	case *ast.CompositeLit:
+		ident = getIdentOfTypeOfExpr(e.Type)
+
 	default:
 		return ""
 	}

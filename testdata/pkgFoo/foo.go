@@ -11,6 +11,16 @@ func pri18ntln(a ...any) (n int, err error) {
 	return fmt.Println(a...)
 }
 
+type i18nMessage struct {
+	ID       string
+	Fallback string
+}
+
+var MsgHelloTest = &i18nMessage{
+	ID:       "测试消息 ID",
+	Fallback: "这两个字符串都不该被报告",
+}
+
 func main() {
 	fmt.Println("当前系统时间:", time.Now().In(time.Local))
 	fmt.Println(escapeHatch("XXX 不应该报告这个"))
