@@ -58,7 +58,7 @@ You just need to make sure the `golang.org/x/tools` version used to build the
 plugin is consistent with that of your `golangci-lint` binary. (Of course the
 `golangci-lint` binary should be built with plugin support enabled too;
 notably, [the Homebrew `golangci-lint` is built without plugin support][hb-issue],
-so be ware of this.)
+so beware of this.)
 
 [hb-issue]: https://github.com/golangci/golangci-lint/issues/1182
 
