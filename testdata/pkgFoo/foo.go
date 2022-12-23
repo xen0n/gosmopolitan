@@ -7,6 +7,11 @@ import (
 
 type escapeHatch = string
 
+type someTable struct {
+	// ID 主键
+	ID uint64 `gorm:"comment:'此行不该被报告'"`
+}
+
 func pri18ntln(a ...any) (n int, err error) {
 	return fmt.Println(a...)
 }

@@ -146,9 +146,11 @@ func (c *processCtx) run() (any, error) {
 			return false
 		}
 
-		// skip import blocks that can contain string literals but are not
+		// skip blocks that can contain string literals but are not otherwise
 		// interesting for us
-		if _, ok := n.(*ast.ImportSpec); ok {
+		switch n.(type) {
+		case *ast.ImportSpec, *ast.TypeSpec:
+			// import blocks, type declarations
 			return false
 		}
 
