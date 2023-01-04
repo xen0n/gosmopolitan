@@ -38,12 +38,16 @@ type AnalyzerConfig struct {
 	// for any usage in string literals. The range of supported scripts is
 	// determined by the Go unicode package and values are case-sensitive.
 	WatchForScripts []string
+	// AllowTimeLocal is flag controlling whether usages of time.Local are
+	// allowed (i.e. not reported).
+	AllowTimeLocal bool
 }
 
 func NewAnalyzer() *analysis.Analyzer {
 	var lookAtTests bool
 	var escapeHatchesStr string
 	var watchForScriptsStr string
+	var allowTimeLocal bool
 
 	a := &analysis.Analyzer{
 		Name: "gosmopolitan",
@@ -56,6 +60,7 @@ func NewAnalyzer() *analysis.Analyzer {
 				LookAtTests:     lookAtTests,
 				EscapeHatches:   strings.Split(escapeHatchesStr, ","),
 				WatchForScripts: strings.Split(watchForScriptsStr, ","),
+				AllowTimeLocal:  allowTimeLocal,
 			}
 			pctx := processCtx{cfg: &cfg, p: p}
 			return pctx.run()
@@ -79,6 +84,11 @@ func NewAnalyzer() *analysis.Analyzer {
 		"watchforscripts",
 		"Han",
 		"comma-separated list of Unicode scripts to watch out for occurrence in string literals",
+	)
+	a.Flags.BoolVar(&allowTimeLocal,
+		"allowtimelocal",
+		false,
+		"allow time.Local usages",
 	)
 
 	return a
@@ -242,34 +252,36 @@ func (c *processCtx) run() (any, error) {
 		return true
 	})
 
-	// check time.Local usages
-	insp.Nodes([]ast.Node{(*ast.Ident)(nil)}, func(n ast.Node, push bool) bool {
-		// we only need to look at each node once
-		if !push {
-			return false
-		}
+	if !c.cfg.AllowTimeLocal {
+		// check time.Local usages
+		insp.Nodes([]ast.Node{(*ast.Ident)(nil)}, func(n ast.Node, push bool) bool {
+			// we only need to look at each node once
+			if !push {
+				return false
+			}
 
-		if shouldSkipTheContainingFile(n) {
-			return false
-		}
+			if shouldSkipTheContainingFile(n) {
+				return false
+			}
 
-		ident := n.(*ast.Ident)
+			ident := n.(*ast.Ident)
 
-		d := c.p.TypesInfo.ObjectOf(ident)
-		if d == nil || d.Pkg() == nil {
+			d := c.p.TypesInfo.ObjectOf(ident)
+			if d == nil || d.Pkg() == nil {
+				return true
+			}
+
+			if d.Pkg().Path() == "time" && d.Name() == "Local" {
+				c.p.Report(analysis.Diagnostic{
+					Pos:     n.Pos(),
+					End:     n.End(),
+					Message: "usage of time.Local",
+				})
+			}
+
 			return true
-		}
-
-		if d.Pkg().Path() == "time" && d.Name() == "Local" {
-			c.p.Report(analysis.Diagnostic{
-				Pos:     n.Pos(),
-				End:     n.End(),
-				Message: "usage of time.Local",
-			})
-		}
-
-		return true
-	})
+		})
+	}
 
 	return nil, nil
 }
