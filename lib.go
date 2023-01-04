@@ -173,7 +173,7 @@ func (c *processCtx) run() (any, error) {
 	}
 
 	for _, s := range c.cfg.WatchForScripts {
-		if err := isValidUnicodeScriptName(s); err != nil {
+		if err := validateUnicodeScriptName(s); err != nil {
 			return nil, err
 		}
 	}
