@@ -86,6 +86,10 @@ so beware of this.)
 
 [hb-issue]: https://github.com/golangci/golangci-lint/issues/1182
 
+|`golangci-lint` version|`gosmopolitan` tag to use|
+|-----------------------|-------------------------|
+|1.50.x|v1.0.0|
+
 Then reference it in your `.golangci.yml`, and enable it in the `linters`
 section:
 

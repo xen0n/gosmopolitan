@@ -76,6 +76,10 @@ var AnalyzerPlugin analyzerPlugin
 
 [hb-issue]: https://github.com/golangci/golangci-lint/issues/1182
 
+|`golangci-lint` 版本|对应可用的 `gosmopolitan` tag|
+|--------------------|-----------------------------|
+|1.50.x|v1.0.0|
+
 然后在您的 `.golangci.yml` 中引用它，在 `linters` 一节中启用它：
 
 ```yaml
