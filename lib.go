@@ -115,9 +115,11 @@ func NewAnalyzerWithConfig(cfg *AnalyzerConfig) *analysis.Analyzer {
 
 var DefaultAnalyzer = NewAnalyzer()
 
-func isValidUnicodeScriptName(name string) bool {
-	_, ok := unicode.Scripts[name]
-	return ok
+func validateUnicodeScriptName(name string) error {
+	if _, ok := unicode.Scripts[name]; !ok {
+		return fmt.Errorf("invalid Unicode script name: %s", name)
+	}
+	return nil
 }
 
 // example input: ["Han", "Arabic"]
@@ -170,8 +172,8 @@ func (c *processCtx) run() (any, error) {
 	}
 
 	for _, s := range c.cfg.WatchForScripts {
-		if !isValidUnicodeScriptName(s) {
-			return nil, fmt.Errorf("invalid Unicode script name: %s", s)
+		if err := isValidUnicodeScriptName(s); err != nil {
+			return nil, err
 		}
 	}
 
