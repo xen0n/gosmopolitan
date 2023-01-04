@@ -234,8 +234,8 @@ func (c *processCtx) run() (any, error) {
 			scriptName := usq.queryScriptForRuneBytes(matchCh)
 
 			c.p.Report(analysis.Diagnostic{
-				Pos:     lit.Pos(),
-				End:     lit.End(),
+				Pos:     lit.Pos() + token.Pos(match[0]),
+				End:     lit.Pos() + token.Pos(match[1]),
 				Message: fmt.Sprintf("string literal contains rune in %s script", scriptName),
 			})
 		}
