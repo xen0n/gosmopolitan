@@ -18,7 +18,7 @@ import (
 )
 
 const analyzerName = "gosmopolitan"
-const analyzerDoc = "gosmopolitan checks for potential i18n/l10n hindrances"
+const analyzerDoc = "Report certain i18n/l10n anti-patterns in your Go codebase"
 
 type AnalyzerConfig struct {
 	// LookAtTests is flag controlling whether the lints are going to look at

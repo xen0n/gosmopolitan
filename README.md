@@ -7,6 +7,8 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/xen0n/gosmopolitan)](https://goreportcard.com/report/github.com/xen0n/gosmopolitan)
 [![Go Reference](https://pkg.go.dev/badge/github.com/xen0n/gosmopolitan.svg)](https://pkg.go.dev/github.com/xen0n/gosmopolitan)
 
+[简体中文](./README.zh-Hans.md)
+
 `gosmopolitan` checks your Go codebase for code smells that may prove to be
 hindrance to internationalization ("i18n") and/or localization ("l10n").
 
@@ -99,7 +101,7 @@ linters-settings:
   custom:
     gosmopolitan:
       path: 'path/to/your/plugin.so'
-      description: 'Report i18n/l10n anti-patterns in your Go codebase'
+      description: 'Report certain i18n/l10n anti-patterns in your Go codebase'
       original-url: 'https://github.com/xen0n/gosmopolitan'
   # ...
 ```
