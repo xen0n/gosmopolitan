@@ -1,7 +1,6 @@
 package gosmopolitan
 
 import (
-	"errors"
 	"fmt"
 	"go/ast"
 	"go/token"
@@ -155,7 +154,7 @@ func (c *processCtx) run() (any, error) {
 	escapeHatchesSet := sliceToSet(c.cfg.EscapeHatches)
 
 	if len(c.cfg.WatchForScripts) == 0 {
-		return nil, errors.New("at least one Unicode script must be watched for")
+		c.cfg.WatchForScripts = []string{"Han"}
 	}
 
 	for _, s := range c.cfg.WatchForScripts {
