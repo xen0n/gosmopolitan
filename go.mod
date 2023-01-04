@@ -3,7 +3,7 @@ module github.com/xen0n/gosmopolitan
 go 1.19
 
 require (
-	golang.org/x/text v0.3.8
+	golang.org/x/text v0.5.0
 	golang.org/x/tools v0.2.0
 )
 
