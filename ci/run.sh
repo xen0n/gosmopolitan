@@ -4,7 +4,6 @@ my_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$my_dir/.."
 
 coverdir="$(mktemp -d)"
-stdout="$(mktemp)"
 
 die () {
     echo fatal: "$@" >&2
@@ -23,13 +22,32 @@ sed-i () {
     fi
 }
 
-GOCOVERDIR="$coverdir" ./gosmopolitan \
-    -escapehatches '(github.com/xen0n/gosmopolitan/testdata/pkgFoo).escapeHatch,(github.com/xen0n/gosmopolitan/testdata/pkgFoo).pri18ntln,(github.com/xen0n/gosmopolitan/testdata/pkgFoo).i18nMessage' \
-    ./testdata/pkgFoo > "$stdout" 2>&1 && die "return code should be non-zero"
+check () {
+    local pkg="$1"  # xxx (transformed into ./testdata/xxx)
+    local shouldSucceed="$2"  # true / false
+    local expectedFixture="$3"  # expected1.txt
+    shift
+    shift
+    shift
 
-sed-i 's@^.*/testdata/pkgFoo/@ROOT/@' "$stdout"
-diff -u ./testdata/pkgFoo/expected.txt "$stdout" || die "unexpected linter output"
-rm "$stdout"
+    local pkgdir="./testdata/$pkg"
+    local stdout="$(mktemp)"
+    GOCOVERDIR="$coverdir" ./gosmopolitan "$@" "$pkgdir" > "$stdout" 2>&1
+    local ret=$?
+
+    if "$shouldSucceed"; then
+        [[ $ret -eq 0 ]] || die "return code should be zero"
+    else
+        [[ $ret -ne 0 ]] || die "return code should be non-zero"
+    fi
+
+    sed-i "s@^.*/testdata/$pkg/@ROOT/@" "$stdout"
+    diff -u "$pkgdir/$expectedFixture" "$stdout" || die "unexpected linter output"
+    rm "$stdout"
+}
+
+check pkgFoo false expected.txt \
+    -escapehatches '(github.com/xen0n/gosmopolitan/testdata/pkgFoo).escapeHatch,(github.com/xen0n/gosmopolitan/testdata/pkgFoo).pri18ntln,(github.com/xen0n/gosmopolitan/testdata/pkgFoo).i18nMessage'
 
 go tool covdata textfmt -i="$coverdir" -o ./coverage.txt
 rm -rf "$coverdir"
