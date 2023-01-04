@@ -29,6 +29,21 @@ Currently `gosmopolitan` checks for the following anti-patterns:
     the respective user preference, or the timezone as dictated by the domain
     logic.
 
+## Caveats
+
+Note that the checks implemented here are only suitable for codebases with the
+following characteristics, and may not suit your particular project's needs:
+
+* Originally developed for an audience using non-Latin writing system(s),
+* Returns bare strings intended for humans containing such non-Latin characters, and
+* May occasionally (or frequently) refer to the local timezone.
+
+For example, the lints may prove valuable if you're revamping a web service
+originally targetting the Chinese market (hence producing strings with Chinese
+characters all over the place) to be more i18n-aware. Conversely, if you want
+to identify some of the i18n-naïve places in an English-only app, the linter
+will output nothing.
+
 ## golangci-lint integration
 
 `gosmopolitan` is not integrated into [`golangci-lint`][gcl-home] yet, but
