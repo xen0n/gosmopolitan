@@ -36,9 +36,9 @@ type AnalyzerConfig struct {
 	EscapeHatches []string
 	// WatchForScripts is optionally a list of Unicode script names to watch
 	// for any usage in string literals. The range of supported scripts is
-	// determined by the Go unicode package and values are case-sensitive.
+	// determined by the [unicode.Scripts] map and values are case-sensitive.
 	WatchForScripts []string
-	// AllowTimeLocal is flag controlling whether usages of time.Local are
+	// AllowTimeLocal is flag controlling whether usages of [time.Local] are
 	// allowed (i.e. not reported).
 	AllowTimeLocal bool
 }
