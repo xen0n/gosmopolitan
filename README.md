@@ -69,7 +69,8 @@ import (
 type analyzerPlugin struct{}
 
 func (analyzerPlugin) GetAnalyzers() []*analysis.Analyzer {
-	// You can customize the options via the gosmopolitan.NewAnalyzer.
+	// You can customize the options via gosmopolitan.NewAnalyzerWithConfig
+	// instead.
 	return []*analysis.Analyzer{
 		gosmopolitan.DefaultAnalyzer,
 	}
