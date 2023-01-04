@@ -36,7 +36,7 @@ check () {
     local ret=$?
 
     if "$shouldSucceed"; then
-        [[ $ret -eq 0 ]] || die "return code should be zero"
+        [[ $ret -eq 0 ]] || die "return code should be zero, but is $ret"
     else
         [[ $ret -ne 0 ]] || die "return code should be non-zero"
     fi
@@ -46,8 +46,22 @@ check () {
     rm "$stdout"
 }
 
-check pkgFoo false expected.txt \
+check pkgFoo false expected0.txt
+
+check pkgFoo false expected1.txt \
     -escapehatches '(github.com/xen0n/gosmopolitan/testdata/pkgFoo).escapeHatch,(github.com/xen0n/gosmopolitan/testdata/pkgFoo).pri18ntln,(github.com/xen0n/gosmopolitan/testdata/pkgFoo).i18nMessage'
+
+check pkgFoo false expected2.txt \
+    -allowtimelocal \
+    -escapehatches '(github.com/xen0n/gosmopolitan/testdata/pkgFoo).escapeHatch,(github.com/xen0n/gosmopolitan/testdata/pkgFoo).pri18ntln,(github.com/xen0n/gosmopolitan/testdata/pkgFoo).i18nMessage'
+
+check pkgFoo true expected3.txt \
+    -allowtimelocal \
+    -watchforscripts Arabic
+
+check pkgFoo false expected4.txt \
+    -allowtimelocal \
+    -watchforscripts Arabic,Devanagari
 
 go tool covdata textfmt -i="$coverdir" -o ./coverage.txt
 rm -rf "$coverdir"
