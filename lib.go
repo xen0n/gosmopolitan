@@ -1,13 +1,16 @@
 package gosmopolitan
 
 import (
+	"errors"
 	"fmt"
 	"go/ast"
 	"go/token"
 	"go/types"
 	"regexp"
 	"strings"
+	"unicode"
 
+	"golang.org/x/text/runes"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -32,11 +35,16 @@ type AnalyzerConfig struct {
 	// `type R = string` as markers, or have explicitly i18n-aware functions
 	// exempt from the checks.
 	EscapeHatches []string
+	// WatchForScripts is optionally a list of Unicode script names to watch
+	// for any usage in string literals. The range of supported scripts is
+	// determined by the Go unicode package and values are case-sensitive.
+	WatchForScripts []string
 }
 
 func NewAnalyzer() *analysis.Analyzer {
 	var lookAtTests bool
 	var escapeHatchesStr string
+	var watchForScriptsStr string
 
 	a := &analysis.Analyzer{
 		Name: "gosmopolitan",
@@ -46,8 +54,9 @@ func NewAnalyzer() *analysis.Analyzer {
 		},
 		Run: func(p *analysis.Pass) (any, error) {
 			cfg := AnalyzerConfig{
-				LookAtTests:   lookAtTests,
-				EscapeHatches: strings.Split(escapeHatchesStr, ","),
+				LookAtTests:     lookAtTests,
+				EscapeHatches:   strings.Split(escapeHatchesStr, ","),
+				WatchForScripts: strings.Split(watchForScriptsStr, ","),
 			}
 			pctx := processCtx{cfg: &cfg, p: p}
 			return pctx.run()
@@ -65,6 +74,12 @@ func NewAnalyzer() *analysis.Analyzer {
 		"escapehatches",
 		"",
 		"comma-separated list of fully qualified names to act as i18n escape hatches",
+	)
+	a.Flags.StringVar(
+		&watchForScriptsStr,
+		"watchforscripts",
+		"Han",
+		"comma-separated list of Unicode scripts to watch out for occurrence in string literals",
 	)
 
 	return a
@@ -89,7 +104,30 @@ func NewAnalyzerWithConfig(cfg *AnalyzerConfig) *analysis.Analyzer {
 
 var DefaultAnalyzer = NewAnalyzer()
 
-var reHanChars = regexp.MustCompile(`\p{Han}`)
+func isValidUnicodeScriptName(name string) bool {
+	_, ok := unicode.Scripts[name]
+	return ok
+}
+
+// example input: ["Han", "Arabic"]
+// example output: `\p{Han}|\p{Arabic}`
+// assumes len(scriptNames) > 0
+func makeUnicodeScriptMatcherRegexpString(scriptNames []string) string {
+	var sb strings.Builder
+	for i, s := range scriptNames {
+		if i > 0 {
+			sb.WriteRune('|')
+		}
+		sb.WriteString(`\p{`)
+		sb.WriteString(s)
+		sb.WriteRune('}')
+	}
+	return sb.String()
+}
+
+func makeUnicodeScriptMatcherRegexp(scriptNames []string) (*regexp.Regexp, error) {
+	return regexp.Compile(makeUnicodeScriptMatcherRegexpString(scriptNames))
+}
 
 type processCtx struct {
 	cfg *AnalyzerConfig
@@ -115,6 +153,23 @@ func getFullyQualifiedName(x types.Object) string {
 
 func (c *processCtx) run() (any, error) {
 	escapeHatchesSet := sliceToSet(c.cfg.EscapeHatches)
+
+	if len(c.cfg.WatchForScripts) == 0 {
+		return nil, errors.New("at least one Unicode script must be watched for")
+	}
+
+	for _, s := range c.cfg.WatchForScripts {
+		if !isValidUnicodeScriptName(s) {
+			return nil, fmt.Errorf("invalid Unicode script name: %s", s)
+		}
+	}
+
+	charRE, err := makeUnicodeScriptMatcherRegexp(c.cfg.WatchForScripts)
+	if err != nil {
+		return nil, err
+	}
+
+	usq := newUnicodeScriptQuerier(c.cfg.WatchForScripts)
 
 	insp := c.p.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
@@ -173,12 +228,15 @@ func (c *processCtx) run() (any, error) {
 
 		// report string literals containing characters of given script (in
 		// the sense of "writing system")
-		// for now only the Han script is being checked
-		if reHanChars.MatchString(lit.Value) {
+		if charRE.MatchString(lit.Value) {
+			match := charRE.FindIndex([]byte(lit.Value))
+			matchCh := []byte(lit.Value)[match[0]:match[1]]
+			scriptName := usq.queryScriptForRuneBytes(matchCh)
+
 			c.p.Report(analysis.Diagnostic{
 				Pos:     lit.Pos(),
 				End:     lit.End(),
-				Message: fmt.Sprintf("string literal contains %s script char(s)", "Han"),
+				Message: fmt.Sprintf("string literal contains rune in %s script", scriptName),
 			})
 		}
 
@@ -246,4 +304,28 @@ func getIdentOfTypeOfExpr(e ast.Expr) *ast.Ident {
 		return x.Sel
 	}
 	return nil
+}
+
+type unicodeScriptQuerier struct {
+	sets map[string]runes.Set
+}
+
+func newUnicodeScriptQuerier(scriptNames []string) *unicodeScriptQuerier {
+	sets := make(map[string]runes.Set, len(scriptNames))
+	for _, s := range scriptNames {
+		sets[s] = runes.In(unicode.Scripts[s])
+	}
+	return &unicodeScriptQuerier{
+		sets: sets,
+	}
+}
+
+func (x *unicodeScriptQuerier) queryScriptForRuneBytes(b []byte) string {
+	r := []rune(string(b))[0]
+	for s, set := range x.sets {
+		if set.Contains(r) {
+			return s
+		}
+	}
+	return ""
 }

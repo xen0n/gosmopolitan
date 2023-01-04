@@ -27,6 +27,7 @@ var MsgHelloTest = &i18nMessage{
 }
 
 func main() {
+	_ = "नमस्ते दुनिया" // should only get reported if configured to watch for Devanagari
 	fmt.Println("当前系统时间:", time.Now().In(time.Local))
 	fmt.Println(escapeHatch("XXX 不应该报告这个"))
 	_, _ = pri18ntln("XXX 也不应该报告这个字符串，但应该报出 time.Local", time.Now().In(time.Local))

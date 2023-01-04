@@ -9,8 +9,8 @@ The name is a wordplay on "cosmopolitan".
 
 Currently `gosmopolitan` checks for the following anti-patterns:
 
-*   Occurrences of string literals containing characters from a certain
-    writing system.
+*   Occurrences of string literals containing characters from certain writing
+    systems.
 
     Existence of such strings often means the relevant logic is hard to
     internationalize, or at least, require special care when doing i18n/l10n.
