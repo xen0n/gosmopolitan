@@ -17,6 +17,9 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
+const analyzerName = "gosmopolitan"
+const analyzerDoc = "gosmopolitan checks for possible hurdles to i18n/l10n"
+
 type AnalyzerConfig struct {
 	// LookAtTests is flag controlling whether the lints are going to look at
 	// test files, despite other config knobs of the Go analysis tooling
@@ -52,8 +55,8 @@ func NewAnalyzer() *analysis.Analyzer {
 	var allowTimeLocal bool
 
 	a := &analysis.Analyzer{
-		Name: "gosmopolitan",
-		Doc:  "gosmopolitan checks for possible hurdles to i18n/l10n",
+		Name: analyzerName,
+		Doc:  analyzerDoc,
 		Requires: []*analysis.Analyzer{
 			inspect.Analyzer,
 		},
@@ -97,9 +100,9 @@ func NewAnalyzer() *analysis.Analyzer {
 }
 
 func NewAnalyzerWithConfig(cfg *AnalyzerConfig) *analysis.Analyzer {
-	a := &analysis.Analyzer{
-		Name: "gosmopolitan",
-		Doc:  "gosmopolitan checks for possible hurdles to i18n/l10n",
+	return &analysis.Analyzer{
+		Name: analyzerName,
+		Doc:  analyzerDoc,
 		Requires: []*analysis.Analyzer{
 			inspect.Analyzer,
 		},
@@ -109,8 +112,6 @@ func NewAnalyzerWithConfig(cfg *AnalyzerConfig) *analysis.Analyzer {
 		},
 		RunDespiteErrors: false,
 	}
-
-	return a
 }
 
 var DefaultAnalyzer = NewAnalyzer()
