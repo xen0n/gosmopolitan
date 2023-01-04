@@ -1,5 +1,12 @@
 # gosmopolitan
 
+![GitHub Workflow Status (main branch)](https://img.shields.io/github/actions/workflow/status/xen0n/gosmopolitan/go.yml?branch=main)
+![Codecov](https://img.shields.io/codecov/c/gh/xen0n/gosmopolitan)
+![GitHub license info](https://img.shields.io/github/license/xen0n/gosmopolitan)
+![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/xen0n/gosmopolitan)
+[![Go Report Card](https://goreportcard.com/badge/github.com/xen0n/gosmopolitan)](https://goreportcard.com/report/github.com/xen0n/gosmopolitan)
+[![Go Reference](https://pkg.go.dev/badge/github.com/xen0n/gosmopolitan.svg)](https://pkg.go.dev/github.com/xen0n/gosmopolitan)
+
 `gosmopolitan` checks your Go codebase for code smells that may prove to be
 hindrance to internationalization ("i18n") and/or localization ("l10n").
 
