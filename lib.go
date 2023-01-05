@@ -200,7 +200,7 @@ func (c *processCtx) run() (any, error) {
 
 	shouldSkipTheContainingFile := func(n ast.Node) bool {
 		if c.cfg.LookAtTests {
-			return true
+			return false
 		}
 		return isBelongingToTestFiles(n)
 	}
