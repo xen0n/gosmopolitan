@@ -148,6 +148,17 @@ type processCtx struct {
 	p   *analysis.Pass
 }
 
+func mapSlice[T any, U any](x []T, fn func(T) U) []U {
+	if x == nil {
+		return nil
+	}
+	y := make([]U, len(x))
+	for i, v := range x {
+		y[i] = fn(v)
+	}
+	return y
+}
+
 func sliceToSet[T comparable](x []T) map[T]struct{} {
 	// lo.SliceToMap(x, func(k T) (T, struct{}) { return k, struct{}{} })
 	y := make(map[T]struct{}, len(x))
@@ -162,11 +173,38 @@ func getFullyQualifiedName(x types.Object) string {
 	if pkg == nil {
 		return x.Name()
 	}
-	return fmt.Sprintf("(%s).%s", pkg.Path(), x.Name())
+	return fmt.Sprintf("%s.%s", pkg.Path(), x.Name())
+}
+
+// if input is in the "(%s).%s" form, remove the parens, else return the
+// unchanged input
+//
+// this is for maintaining compatibility with the previous FQN notation that
+// was born out of my confusion (the previous notation, while commonly seen,
+// seems to be only for methods or pointer receiver types; the parens-less
+// form is in fact unambiguous, because Go identifiers can't contain periods.)
+func unquoteInputFQN(x string) string {
+	if x[0] != '(' {
+		return x
+	}
+
+	before, after, found := strings.Cut(x[1:], ")")
+	if !found {
+		// malformed input: string in "(xxxxx" form with unclosed parens!
+		// in this case, only removing the opening parens might be better than
+		// doing nothing after all
+		return x[1:]
+	}
+
+	// at this point,
+	// input: "(foo).bar"
+	// before: "foo"
+	// after: ".bar"
+	return before + after
 }
 
 func (c *processCtx) run() (any, error) {
-	escapeHatchesSet := sliceToSet(c.cfg.EscapeHatches)
+	escapeHatchesSet := sliceToSet(mapSlice(c.cfg.EscapeHatches, unquoteInputFQN))
 
 	if len(c.cfg.WatchForScripts) == 0 {
 		c.cfg.WatchForScripts = []string{"Han"}

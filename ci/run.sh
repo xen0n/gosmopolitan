@@ -53,7 +53,7 @@ check pkgFoo false expected1.txt \
 
 check pkgFoo false expected2.txt \
     -allowtimelocal \
-    -escapehatches '(github.com/xen0n/gosmopolitan/testdata/pkgFoo).escapeHatch,(github.com/xen0n/gosmopolitan/testdata/pkgFoo).pri18ntln,(github.com/xen0n/gosmopolitan/testdata/pkgFoo).i18nMessage'
+    -escapehatches 'github.com/xen0n/gosmopolitan/testdata/pkgFoo.escapeHatch,github.com/xen0n/gosmopolitan/testdata/pkgFoo.pri18ntln,github.com/xen0n/gosmopolitan/testdata/pkgFoo.i18nMessage'
 
 check pkgFoo true expected3.txt \
     -allowtimelocal \
