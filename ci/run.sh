@@ -67,6 +67,9 @@ check pkgFoo false expected4.txt \
     -allowtimelocal \
     -watchforscripts Arabic,Devanagari
 
+check pkgFoo false expected5.txt \
+    -lookattests
+
 go tool covdata textfmt -i="$coverdir" -o ./coverage.txt
 rm -rf "$coverdir"
 
