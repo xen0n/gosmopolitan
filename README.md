@@ -31,6 +31,22 @@ Currently `gosmopolitan` checks for the following anti-patterns:
     the respective user preference, or the timezone as dictated by the domain
     logic.
 
+Note that local times are produced in a lot more ways than via direct casts to
+`time.Local` alone, such as:
+
+* `time.LoadLocation("Local")`
+* received from a `time.Ticker`
+* functions explicitly documented to return local times
+    * `time.Now()`
+    * `time.Unix()`
+    * `time.UnixMilli()`
+    * `time.UnixMicro()`
+
+Proper identification of these use cases require a fairly complete dataflow
+analysis pass, which is not implemented currently. In addition, right now you
+have to pay close attention to externally-provided time values (such as from
+your framework like Gin or gRPC) as they are not properly tracked either.
+
 ## Caveats
 
 Note that the checks implemented here are only suitable for codebases with the
