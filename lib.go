@@ -184,7 +184,7 @@ func getFullyQualifiedName(x types.Object) string {
 // seems to be only for methods or pointer receiver types; the parens-less
 // form is in fact unambiguous, because Go identifiers can't contain periods.)
 func unquoteInputFQN(x string) string {
-	if x[0] != '(' {
+	if len(x) == 0 || x[0] != '(' {
 		return x
 	}
 
