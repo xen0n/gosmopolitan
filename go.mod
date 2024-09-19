@@ -1,6 +1,6 @@
 module github.com/xen0n/gosmopolitan
 
-go 1.19
+go 1.22
 
 require (
 	golang.org/x/text v0.18.0
