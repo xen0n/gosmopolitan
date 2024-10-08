@@ -4,7 +4,7 @@ go 1.22.0
 
 require (
 	golang.org/x/text v0.18.0
-	golang.org/x/tools v0.25.0
+	golang.org/x/tools v0.26.0
 )
 
 require (
