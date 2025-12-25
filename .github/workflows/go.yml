@@ -17,10 +17,10 @@ jobs:
         with:
           go-version: '>=1.24.0'
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Build
-        run: GOEXPERIMENT=coverageredesign go build -cover -v ./cmd/gosmopolitan
+        run: go build -cover -v ./cmd/gosmopolitan
 
       - name: Test
         run: ./ci/run.sh
