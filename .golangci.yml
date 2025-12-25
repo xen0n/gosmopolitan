@@ -1,27 +1,44 @@
+version: "2"
 run:
-  go: '1.24'
+  go: "1.24"
   modules-download-mode: readonly
-
 linters:
   enable:
     - goheader
-    - goimports
     - gosec
-    - gosimple
     - lll
     - nakedret
     - revive
-    - stylecheck
-    - unused
-
-linters-settings:
-  goheader:
-    template: |-
-      SPDX-License-Identifier: GPL-3.0-or-later
-  goimports:
-    local-prefixes: github.com/xen0n/gosmopolitan
-  lll:
-    line-length: 120
-    tab-width: 4
-  nakedret:
-    max-func-lines: 1
+    - staticcheck
+  settings:
+    goheader:
+      template: 'SPDX-License-Identifier: GPL-3.0-or-later'
+    lll:
+      line-length: 120
+      tab-width: 4
+    nakedret:
+      max-func-lines: 1
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/xen0n/gosmopolitan
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
